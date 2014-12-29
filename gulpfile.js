@@ -9,8 +9,6 @@ browserify = require('browserify');
 
 var bundler = watchify(browserify('./app/src/main.js', watchify.args));
 
-bundler.transform('brfs');
-
 gulp.task('js', bundle);
 bundler.on('update', bundle);
 
