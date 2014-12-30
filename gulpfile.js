@@ -7,11 +7,13 @@ watchify = require('watchify'),
 browserify = require('browserify'),
 env = require('node-env-file'),
 envify = require('envify'),
+reactify = require('reactify'),
 sass = require('gulp-sass');
 
 env('.env');
 
-var bundler = watchify(browserify('./app/src/main.js', watchify.args));
+var bundler = watchify(browserify('./app/src/main.js', watchify.args))
+  .transform(reactify);
 
 bundler.transform(envify);
 
