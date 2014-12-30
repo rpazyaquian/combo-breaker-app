@@ -1,9 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./app/src/main.js":[function(require,module,exports){
 var $ = require('jquery');
-var apiKey = "AIzaSyCylBAnJsMHFDd_YdSuLjhBEKvNymdL1LY";
-
-var address = '177 Linkside Circle';
-var cuisine = 'Chinese';
+var SearchPlaces = require('./searchPlaces.js');
 
 var user = {
   username: "rebecca",
@@ -21,43 +18,63 @@ var searchParams = {
   cuisine: null
 };
 
+$('#cuisine-input').on('change', function(event) {
+  event.preventDefault();
+  searchParams.cuisine = $('#cuisine-input').val();
+});
+
+$('#address-input').on('change', function(event) {
+  event.preventDefault();
+  searchParams.address = $('#address-input').val();
+});
+
+$('#search-button').on('click', function(event) {
+  event.preventDefault();
+  SearchPlaces.submitSearch({
+    address: searchParams.address,
+    keyword: searchParams.cuisine
+  });
+});
+},{"./searchPlaces.js":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js","jquery":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/jquery/dist/jquery.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js":[function(require,module,exports){
 var GMaps = require('gmaps');
 
-var map;
+var SearchPlaces = {};
 
-var submitSearch = function(params) {
-  findAddress(params);
+SearchPlaces.submitSearch = function(params) {
+  this.findAddress(params);
 };
 
-var raiseAddressNotFound = function() {
+SearchPlaces.raiseAddressNotFound = function() {
   console.log("address not found or input is invalid");
 };
 
-var findAddress = function(params) {
+SearchPlaces.findAddress = function(params) {
+  var self = this;
   GMaps.geocode({
     address: params.address,
     callback: function(results, status) {
       // if the address exists,
       if (status === 'OK') {
         // then we can move onto making the map
-        var map = buildMap(results);
-        createPlacesLayer(map, params.keyword);
+        var map = self.buildMap(results);
+        self.createPlacesLayer(map, params.keyword);
       } else {
         // complain if the address is invalid
-        raiseAddressNotFound();
+        self.raiseAddressNotFound();
       }
     }
   });
 }
 
-var buildMap = function(results) {
+SearchPlaces.buildMap = function(results) {
+  var self = this;
   var latlng = results[0].geometry.location;
   var lat = latlng.lat();
   var lng = latlng.lng();
-  return createMap(lat, lng);
+  return self.createMap(lat, lng);
 };
 
-var createMap = function(lat, lng) {
+SearchPlaces.createMap = function(lat, lng) {
   var map = new GMaps({
     el: '#map1',
     lat: lat,
@@ -67,7 +84,7 @@ var createMap = function(lat, lng) {
   return map;
 };
 
-var addPlaceMarker = function(map, place) {
+SearchPlaces.addPlaceMarker = function(map, place) {
   map.addMarker({
     lat: place.geometry.location.lat(),
     lng: place.geometry.location.lng(),
@@ -78,7 +95,8 @@ var addPlaceMarker = function(map, place) {
   });
 }
 
-var createPlacesLayer = function(map, keyword) {
+SearchPlaces.createPlacesLayer = function(map, keyword) {
+  var self = this;
   map.addLayer('places', {
     location: map.getCenter(),
     radius: 5000,
@@ -87,36 +105,18 @@ var createPlacesLayer = function(map, keyword) {
       if(status === 'OK') {
         for (var i = 0; i < results.length; i++) {
           var place = results[i];
-          addPlaceMarker(map, place);
+          console.log(place);
+          self.addPlaceMarker(map, place);
         }
+      } else {
+        console.log('no good results found');
       }
     }
   });
 };
 
-$('#cuisine-input').on('change', function(event) {
-  event.preventDefault();
-
-  searchParams.cuisine = $('#cuisine-input').val();
-  console.log(searchParams);
-});
-
-$('#address-input').on('change', function(event) {
-  event.preventDefault();
-
-  searchParams.address = $('#address-input').val();
-  console.log(searchParams);
-});
-
-$('#search-button').on('click', function(event) {
-  event.preventDefault();
-
-  submitSearch({
-    address: searchParams.address,
-    keyword: searchParams.cuisine
-  });
-});
-},{"gmaps":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js","jquery":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/jquery/dist/jquery.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js":[function(require,module,exports){
+module.exports = SearchPlaces;
+},{"gmaps":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js":[function(require,module,exports){
 (function(root, factory) {
   if(typeof exports === 'object') {
     module.exports = factory();
