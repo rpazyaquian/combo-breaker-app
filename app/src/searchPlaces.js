@@ -15,13 +15,10 @@ SearchPlaces.findAddress = function(params) {
   GMaps.geocode({
     address: params.address,
     callback: function(results, status) {
-      // if the address exists,
       if (status === 'OK') {
-        // then we can move onto making the map
         var map = self.buildMap(results);
         self.createPlacesLayer(map, params.keyword);
       } else {
-        // complain if the address is invalid
         self.raiseAddressNotFound();
       }
     }
@@ -38,7 +35,7 @@ SearchPlaces.buildMap = function(results) {
 
 SearchPlaces.createMap = function(lat, lng) {
   var map = new GMaps({
-    el: '#map1',
+    el: '#map',
     lat: lat,
     lng: lng,
     zoom: 13
@@ -50,10 +47,7 @@ SearchPlaces.addPlaceMarker = function(map, place) {
   map.addMarker({
     lat: place.geometry.location.lat(),
     lng: place.geometry.location.lng(),
-    title: place.name,
-    infoWindow : {
-      content : '<h2>'+place.name+'</h2><p>'+(place.vicinity ? place.vicinity : place.formatted_address)+'</p><img src="'+place.icon+'"" width="100"/>'
-    }
+    title: place.name
   });
 }
 
