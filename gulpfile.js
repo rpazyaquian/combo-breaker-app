@@ -2,16 +2,14 @@ var gulp = require('gulp'),
 connect = require('gulp-connect'),
 uglify = require('gulp-uglify'),
 gutil = require('gulp-util'),
-sourcemaps = require('gulp-sourcemaps'),
 source = require('vinyl-source-stream'),
-buffer = require('vinyl-buffer'),
 watchify = require('watchify'),
 browserify = require('browserify'),
 env = require('node-env-file'),
-envify = require('envify');
+envify = require('envify'),
+sass = require('gulp-sass');
 
 env('.env');
-gutil.log(process.env.GOOGLE_MAPS_API_KEY);
 
 var bundler = watchify(browserify('./app/src/main.js', watchify.args));
 
@@ -34,4 +32,18 @@ gulp.task('server', function() {
   });
 });
 
-gulp.task('default', ['server', 'js']);
+gulp.task('sass', function() {
+  return gulp.src('./app/scss/*.scss')
+    .pipe(sass({
+      errLogToConsole: true,
+
+    }))
+    .pipe(gulp.dest('./app/css'))
+    .pipe(gulp.dest('./dist/css'));
+});
+
+gulp.task('watch-sass', function() {
+  gulp.watch('./app/scss/*.scss', ['sass']);
+});
+
+gulp.task('default', ['server', 'js', 'watch-sass']);
