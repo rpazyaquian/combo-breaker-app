@@ -2,8 +2,6 @@
 var $ = require('jquery');
 var React = require('react');
 
-var SearchPlaces = require('./searchPlaces.js');
-
 var App = require('./app.jsx');
 
 var user = {
@@ -17,44 +15,55 @@ var user = {
   ]
 };
 
-
-
 React.render(React.createElement(App, null), document.getElementById('app'));
-},{"./app.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/app.jsx","./searchPlaces.js":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js","jquery":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/jquery/dist/jquery.js","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/app.jsx":[function(require,module,exports){
+},{"./app.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/app.jsx","jquery":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/jquery/dist/jquery.js","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/app.jsx":[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require('react');
+var SearchPlaces = require('./searchPlaces.js');
 
 var SearchForm = require('./searchForm.jsx');
+var SearchResults = require('./searchResults.jsx');
 
-var AppTitle = React.createClass({displayName: "AppTitle",
+var AppHeader = React.createClass({displayName: "AppHeader",
   render: function() {
     return React.createElement("h1", null, "C-C-C-Combo Breaker!");
   }
 });
 
-var MapDisplay = React.createClass({displayName: "MapDisplay",
-  render: function() {
-    return (
-      React.createElement("div", {className: "map", id: "map"})
-    );
-  }
-});
-
 var App = React.createClass({displayName: "App",
+  getInitialState: function() {
+    return {
+      searchResults: null
+    };
+  },
+  handleSearch: function(query) {
+
+    // var results = SearchPlaces.submitSearch(query);
+
+    // console.log(results);
+
+    this.setState({
+      searchResults: query
+    });
+  },
   render: function() {
     return (
       React.createElement("div", null, 
-        React.createElement(AppTitle, null), 
-        React.createElement(SearchForm, null), 
-        React.createElement(MapDisplay, null)
+        React.createElement(AppHeader, null), 
+        React.createElement(SearchForm, {
+          handleSearch: this.handleSearch}
+        ), 
+        React.createElement(SearchResults, {
+          results: this.state.searchResults}
+        )
       )
     );
   }
 });
 
 module.exports = App;
-},{"./searchForm.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchForm.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx":[function(require,module,exports){
+},{"./searchForm.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchForm.jsx","./searchPlaces.js":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js","./searchResults.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchResults.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx":[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require('react');
@@ -116,7 +125,6 @@ module.exports = InputFields;
 /** @jsx React.DOM */
 
 var React = require('react');
-var SearchPlaces = require('./searchPlaces.js');
 
 var InputFields = require('./inputFields.jsx');
 
@@ -150,11 +158,11 @@ var SearchForm = React.createClass({displayName: "SearchForm",
   },
   handleSubmit: function(event) {
     event.preventDefault();
-
-    SearchPlaces.submitSearch({
+    var searchQuery = {
       address: this.state.address,
-      keyword: this.state.cuisine
-    });
+      keyword: this.state.cuisine,
+    };
+    return this.props.handleSearch(searchQuery);
   },
   render: function() {
     return (
@@ -174,82 +182,149 @@ var SearchForm = React.createClass({displayName: "SearchForm",
 });
 
 module.exports = SearchForm;
-},{"./inputFields.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx","./searchPlaces.js":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js":[function(require,module,exports){
+},{"./inputFields.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js":[function(require,module,exports){
 var GMaps = require('gmaps');
 
 var SearchPlaces = {};
 
 SearchPlaces.submitSearch = function(params) {
-  this.findAddress(params);
-};
 
-SearchPlaces.raiseAddressNotFound = function() {
-  console.log("address not found or input is invalid");
-};
+  var results = {
+    places: [],
+    map: null,
+    errors: null
+  };
 
-SearchPlaces.findAddress = function(params) {
-  var self = this;
   GMaps.geocode({
     address: params.address,
     callback: function(results, status) {
       if (status === 'OK') {
-        var map = self.buildMap(results);
-        self.createPlacesLayer(map, params.keyword);
+        var latlng = results[0].geometry.location;
+        var lat = latlng.lat();
+        var lng = latlng.lng();
+
+        var map = new GMaps({
+          el: '#map',
+          lat: lat,
+          lng: lng,
+          zoom: 13
+        });
+
+        // ok i have a problem here
+        // i need to create a map before i can
+        // get places results,
+        // but i need all the search results before i can actually
+
+
+        // map.addLayer('places', {
+        //   location: map.getCenter(),
+        //   radius: 5000,
+        //   keyword: params.keyword,
+        //   nearbySearch: function(results, status) {
+        //     if(status === 'OK') {
+        //       for (var i = 0; i < results.length; i++) {
+        //         var place = results[i];
+        //         console.log(place);
+        //         self.addPlaceMarker(map, place);
+        //       }
+        //     } else {
+        //       console.log('no good results found');
+        //     }
+        //   }
+        // });
+
       } else {
-        self.raiseAddressNotFound();
+        console.log('address not found or invalid');
       }
     }
   });
-}
 
-SearchPlaces.buildMap = function(results) {
-  var self = this;
-  var latlng = results[0].geometry.location;
-  var lat = latlng.lat();
-  var lng = latlng.lng();
-  return self.createMap(lat, lng);
 };
 
-SearchPlaces.createMap = function(lat, lng) {
-  var map = new GMaps({
-    el: '#map',
-    lat: lat,
-    lng: lng,
-    zoom: 13
-  });
-  return map;
-};
+// SearchPlaces.raiseAddressNotFound = function() {
+//   console.log("address not found or input is invalid");
+// };
 
-SearchPlaces.addPlaceMarker = function(map, place) {
-  map.addMarker({
-    lat: place.geometry.location.lat(),
-    lng: place.geometry.location.lng(),
-    title: place.name
-  });
-}
+// SearchPlaces.findAddress = function(params) {
+//   var self = this;
+//   GMaps.geocode({
+//     address: params.address,
+//     callback: function(results, status) {
+//       if (status === 'OK') {
+//         var map = self.buildMap(results);
+//         self.createPlacesLayer(map, params.keyword);
+//       } else {
+//         self.raiseAddressNotFound();
+//       }
+//     }
+//   });
+// }
 
-SearchPlaces.createPlacesLayer = function(map, keyword) {
-  var self = this;
-  map.addLayer('places', {
-    location: map.getCenter(),
-    radius: 5000,
-    keyword: keyword,
-    nearbySearch: function(results, status) {
-      if(status === 'OK') {
-        for (var i = 0; i < results.length; i++) {
-          var place = results[i];
-          console.log(place);
-          self.addPlaceMarker(map, place);
-        }
-      } else {
-        console.log('no good results found');
-      }
-    }
-  });
-};
+// SearchPlaces.buildMap = function(results) {
+//   var self = this;
+//   var latlng = results[0].geometry.location;
+//   var lat = latlng.lat();
+//   var lng = latlng.lng();
+//   return self.createMap(lat, lng);
+// };
+
+// SearchPlaces.createMap = function(lat, lng) {
+//   var map = new GMaps({
+//     el: '#map',
+//     lat: lat,
+//     lng: lng,
+//     zoom: 13
+//   });
+//   return map;
+// };
+
+// SearchPlaces.addPlaceMarker = function(map, place) {
+//   map.addMarker({
+//     lat: place.geometry.location.lat(),
+//     lng: place.geometry.location.lng(),
+//     title: place.name
+//   });
+// }
+
+// SearchPlaces.createPlacesLayer = function(map, keyword) {
+//   var self = this;
+//   map.addLayer('places', {
+//     location: map.getCenter(),
+//     radius: 5000,
+//     keyword: keyword,
+//     nearbySearch: function(results, status) {
+//       if(status === 'OK') {
+//         for (var i = 0; i < results.length; i++) {
+//           var place = results[i];
+//           console.log(place);
+//           self.addPlaceMarker(map, place);
+//         }
+//       } else {
+//         console.log('no good results found');
+//       }
+//     }
+//   });
+// };
 
 module.exports = SearchPlaces;
-},{"gmaps":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
+},{"gmaps":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchResults.jsx":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+
+var SearchResults = React.createClass({displayName: "SearchResults",
+  render: function() {
+    return (
+      React.createElement("div", null, 
+        React.createElement("div", null, "you searched for ", this.props.results), 
+        React.createElement("div", {className: "map", id: "map"}, "map goes here")
+      )
+    );
+  }
+});
+
+module.exports = SearchResults;
+},{"react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};

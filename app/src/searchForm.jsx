@@ -1,7 +1,6 @@
 /** @jsx React.DOM */
 
 var React = require('react');
-var SearchPlaces = require('./searchPlaces.js');
 
 var InputFields = require('./inputFields.jsx');
 
@@ -35,11 +34,11 @@ var SearchForm = React.createClass({
   },
   handleSubmit: function(event) {
     event.preventDefault();
-
-    SearchPlaces.submitSearch({
+    var searchQuery = {
       address: this.state.address,
-      keyword: this.state.cuisine
-    });
+      keyword: this.state.cuisine,
+    };
+    return this.props.handleSearch(searchQuery);
   },
   render: function() {
     return (
