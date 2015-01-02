@@ -15,25 +15,38 @@ var AppHeader = React.createClass({
 var App = React.createClass({
   getInitialState: function() {
     return {
+      searchAddress: "51 Melcher Street, Boston, MA",
+      searchKeyword: "Chinese",
       searchResults: null
     };
   },
-  handleSearch: function(query) {
-
-    // var results = SearchPlaces.submitSearch(query);
-
-    // console.log(results);
-
+  handleSearch: function(event) {
+    event.preventDefault();
+    console.log(this.state);
+  },
+  handleAddressChange: function(event) {
     this.setState({
-      searchResults: query
+      searchAddress: event.target.value
+    });
+  },
+  handleCuisineChange: function(event) {
+    this.setState({
+      searchKeyword: event.target.value
     });
   },
   render: function() {
+    var data = {
+      address: this.state.searchAddress,
+      cuisine: this.state.searchKeyword
+    };
     return (
       <div>
         <AppHeader />
         <SearchForm
-          handleSearch={this.handleSearch}
+          data={data}
+          handleSubmit={this.handleSearch}
+          onAddressChange={this.handleAddressChange}
+          onCuisineChange={this.handleCuisineChange}
         />
         <SearchResults
           results={this.state.searchResults}

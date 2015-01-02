@@ -16,40 +16,17 @@ var SearchButton = React.createClass({
 });
 
 var SearchForm = React.createClass({
-  getInitialState: function() {
-    return {
-      address: "51 Melcher Street, Boston, MA",
-      cuisine: "Chinese"
-    };
-  },
-  handleAddressChange: function(event) {
-    this.setState({
-      address: event.target.value
-    });
-  },
-  handleCuisineChange: function(event) {
-    this.setState({
-      cuisine: event.target.value
-    });
-  },
-  handleSubmit: function(event) {
-    event.preventDefault();
-    var searchQuery = {
-      address: this.state.address,
-      keyword: this.state.cuisine,
-    };
-    return this.props.handleSearch(searchQuery);
-  },
   render: function() {
     return (
-      <form id="search-form" onSubmit={this.handleSubmit}>
+      <form id="search-form"
+        onSubmit={this.props.handleSubmit}>
         <AddressField
-          address={this.state.address}
-          handleChange={this.handleAddressChange}
+          address={this.props.data.address}
+          handleChange={this.props.onAddressChange}
         />
         <CuisineField
-          cuisine={this.state.cuisine}
-          handleChange={this.handleCuisineChange}
+          cuisine={this.props.data.cuisine}
+          handleChange={this.props.onCuisineChange}
         />
         <SearchButton />
       </form>

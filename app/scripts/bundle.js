@@ -34,25 +34,38 @@ var AppHeader = React.createClass({displayName: "AppHeader",
 var App = React.createClass({displayName: "App",
   getInitialState: function() {
     return {
+      searchAddress: "51 Melcher Street, Boston, MA",
+      searchKeyword: "Chinese",
       searchResults: null
     };
   },
-  handleSearch: function(query) {
-
-    // var results = SearchPlaces.submitSearch(query);
-
-    // console.log(results);
-
+  handleSearch: function(event) {
+    event.preventDefault();
+    console.log(this.state);
+  },
+  handleAddressChange: function(event) {
     this.setState({
-      searchResults: query
+      searchAddress: event.target.value
+    });
+  },
+  handleCuisineChange: function(event) {
+    this.setState({
+      searchKeyword: event.target.value
     });
   },
   render: function() {
+    var data = {
+      address: this.state.searchAddress,
+      cuisine: this.state.searchKeyword
+    };
     return (
       React.createElement("div", null, 
         React.createElement(AppHeader, null), 
         React.createElement(SearchForm, {
-          handleSearch: this.handleSearch}
+          data: data, 
+          handleSubmit: this.handleSearch, 
+          onAddressChange: this.handleAddressChange, 
+          onCuisineChange: this.handleCuisineChange}
         ), 
         React.createElement(SearchResults, {
           results: this.state.searchResults}
@@ -71,24 +84,18 @@ var React = require('react');
 var InputFields = {};
 
 InputFields.AddressField = React.createClass({displayName: "AddressField",
-  getInitialState: function() {
-    return {
-      value: this.props.address
-    };
-  },
-  handleChange: function(event) {
-    return this.props.handleChange(event);
-  },
   render: function () {
-    var value = this.state.value;
     return (
       React.createElement("div", null, 
-        React.createElement("label", {htmlFor: "address-input"}, "What's your current location?"), 
+        React.createElement("label", {
+          htmlFor: "address-input"}, 
+          "What's your current location?"
+        ), 
         React.createElement("input", {
           type: "text", 
-          value: value, 
+          value: this.props.address, 
           id: "address-input", 
-          onChange: this.handleChange}
+          onChange: this.props.handleChange}
         )
       )
     );
@@ -96,24 +103,15 @@ InputFields.AddressField = React.createClass({displayName: "AddressField",
 });
 
 InputFields.CuisineField = React.createClass({displayName: "CuisineField",
-  getInitialState: function() {
-    return {
-      value: this.props.cuisine
-    };
-  },
-  handleChange: function(event) {
-    return this.props.handleChange(event);
-  },
   render: function () {
-    var value = this.state.value;
     return (
       React.createElement("div", null, 
         React.createElement("label", {htmlFor: "cuisine-input"}, "cuisine"), 
         React.createElement("input", {
           type: "text", 
-          value: value, 
+          value: this.props.cuisine, 
           id: "cuisine-input", 
-          onChange: this.handleChange}
+          onChange: this.props.handleChange}
         )
       )
     );
@@ -140,40 +138,17 @@ var SearchButton = React.createClass({displayName: "SearchButton",
 });
 
 var SearchForm = React.createClass({displayName: "SearchForm",
-  getInitialState: function() {
-    return {
-      address: "51 Melcher Street, Boston, MA",
-      cuisine: "Chinese"
-    };
-  },
-  handleAddressChange: function(event) {
-    this.setState({
-      address: event.target.value
-    });
-  },
-  handleCuisineChange: function(event) {
-    this.setState({
-      cuisine: event.target.value
-    });
-  },
-  handleSubmit: function(event) {
-    event.preventDefault();
-    var searchQuery = {
-      address: this.state.address,
-      keyword: this.state.cuisine,
-    };
-    return this.props.handleSearch(searchQuery);
-  },
   render: function() {
     return (
-      React.createElement("form", {id: "search-form", onSubmit: this.handleSubmit}, 
+      React.createElement("form", {id: "search-form", 
+        onSubmit: this.props.handleSubmit}, 
         React.createElement(AddressField, {
-          address: this.state.address, 
-          handleChange: this.handleAddressChange}
+          address: this.props.data.address, 
+          handleChange: this.props.onAddressChange}
         ), 
         React.createElement(CuisineField, {
-          cuisine: this.state.cuisine, 
-          handleChange: this.handleCuisineChange}
+          cuisine: this.props.data.cuisine, 
+          handleChange: this.props.onCuisineChange}
         ), 
         React.createElement(SearchButton, null)
       )
