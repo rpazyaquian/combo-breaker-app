@@ -1,6 +1,8 @@
 /** @jsx React.DOM */
 
 var React = require('react');
+var GMaps = require('gmaps');
+
 var SearchPlaces = require('./searchPlaces.js');
 
 var SearchForm = require('./searchForm.jsx');
@@ -17,12 +19,46 @@ var App = React.createClass({
     return {
       searchAddress: "51 Melcher Street, Boston, MA",
       searchKeyword: "Chinese",
-      searchResults: null
+      mapCoords: null
     };
   },
   handleSearch: function(event) {
     event.preventDefault();
-    console.log(this.state);
+
+    var keyword = this.state.searchKeyword;
+
+    // get the search results
+
+    var self = this;
+
+    GMaps.geocode({
+      address: this.state.searchAddress,
+      callback: function(results, status) {
+
+        self.setState({
+          searchResults: keyword
+        });
+
+        if (status === 'OK') {
+          console.log('address was found');
+
+          // if it works,
+          // then you can create a map
+          // then search for places
+          var latlng = results[0].geometry.location;
+          var lat = latlng.lat();
+          var lng = latlng.lng();
+
+          self.setState({
+            mapCoords: {
+              lat: lat,
+              lng: lng
+            }
+          });
+        }
+
+      }
+    });
   },
   handleAddressChange: function(event) {
     this.setState({
@@ -50,6 +86,7 @@ var App = React.createClass({
         />
         <SearchResults
           results={this.state.searchResults}
+          mapCoords={this.state.mapCoords}
         />
       </div>
     );

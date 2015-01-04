@@ -29,7 +29,8 @@ SearchPlaces.submitSearch = function(params) {
         // i need to create a map before i can
         // get places results,
         // but i need all the search results before i can actually
-
+        // decide whether to render the map or not.
+        // damn.
 
         // map.addLayer('places', {
         //   location: map.getCenter(),

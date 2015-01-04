@@ -20,6 +20,8 @@ React.render(React.createElement(App, null), document.getElementById('app'));
 /** @jsx React.DOM */
 
 var React = require('react');
+var GMaps = require('gmaps');
+
 var SearchPlaces = require('./searchPlaces.js');
 
 var SearchForm = require('./searchForm.jsx');
@@ -36,12 +38,46 @@ var App = React.createClass({displayName: "App",
     return {
       searchAddress: "51 Melcher Street, Boston, MA",
       searchKeyword: "Chinese",
-      searchResults: null
+      mapCoords: null
     };
   },
   handleSearch: function(event) {
     event.preventDefault();
-    console.log(this.state);
+
+    var keyword = this.state.searchKeyword;
+
+    // get the search results
+
+    var self = this;
+
+    GMaps.geocode({
+      address: this.state.searchAddress,
+      callback: function(results, status) {
+
+        self.setState({
+          searchResults: keyword
+        });
+
+        if (status === 'OK') {
+          console.log('address was found');
+
+          // if it works,
+          // then you can create a map
+          // then search for places
+          var latlng = results[0].geometry.location;
+          var lat = latlng.lat();
+          var lng = latlng.lng();
+
+          self.setState({
+            mapCoords: {
+              lat: lat,
+              lng: lng
+            }
+          });
+        }
+
+      }
+    });
   },
   handleAddressChange: function(event) {
     this.setState({
@@ -68,7 +104,8 @@ var App = React.createClass({displayName: "App",
           onCuisineChange: this.handleCuisineChange}
         ), 
         React.createElement(SearchResults, {
-          results: this.state.searchResults}
+          results: this.state.searchResults, 
+          mapCoords: this.state.mapCoords}
         )
       )
     );
@@ -76,7 +113,47 @@ var App = React.createClass({displayName: "App",
 });
 
 module.exports = App;
-},{"./searchForm.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchForm.jsx","./searchPlaces.js":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js","./searchResults.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchResults.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx":[function(require,module,exports){
+},{"./searchForm.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchForm.jsx","./searchPlaces.js":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js","./searchResults.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchResults.jsx","gmaps":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/googleMap.jsx":[function(require,module,exports){
+var React = require('react');
+
+var GoogleMap = React.createClass({displayName: "GoogleMap",
+  getDefaultProps: function() {
+    return {
+      zoom: 17,
+      lat: 42.3493307,
+      lng: -71.0500077
+    }
+  },
+  getCenter: function() {
+    return new google.maps.LatLng(this.props.lat, this.props.lng);
+  },
+  componentDidMount: function() {
+    var map = this.buildMap();
+    this.setState({
+      map: map
+    });
+  },
+  buildMap: function() {
+    var mapOptions = {
+      center: this.getCenter(),
+      zoom: this.props.zoom,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    var rootNode = this.getDOMNode();
+    var map = new google.maps.Map(rootNode, mapOptions);
+    return map;
+  },
+  componentDidUpdate: function() {
+    var map = this.state.map;
+    map.panTo(this.getCenter());
+  },
+  render: function() {
+    return React.createElement("div", {className: "map"});
+  },
+});
+
+module.exports = GoogleMap;
+},{"react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx":[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require('react');
@@ -189,7 +266,8 @@ SearchPlaces.submitSearch = function(params) {
         // i need to create a map before i can
         // get places results,
         // but i need all the search results before i can actually
-
+        // decide whether to render the map or not.
+        // damn.
 
         // map.addLayer('places', {
         //   location: map.getCenter(),
@@ -287,19 +365,21 @@ module.exports = SearchPlaces;
 
 var React = require('react');
 
+var GoogleMap = require('./googleMap.jsx');
+
 var SearchResults = React.createClass({displayName: "SearchResults",
   render: function() {
     return (
       React.createElement("div", null, 
         React.createElement("div", null, "you searched for ", this.props.results), 
-        React.createElement("div", {className: "map", id: "map"}, "map goes here")
+        this.props.mapCoords ? React.createElement(GoogleMap, {mapCenterLat: this.props.mapCoords.lat, mapCenterLng: this.props.mapCoords.lng}) : null
       )
     );
   }
 });
 
 module.exports = SearchResults;
-},{"react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
+},{"./googleMap.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/googleMap.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
