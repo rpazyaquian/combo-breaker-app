@@ -27,6 +27,15 @@ var SearchPlaces = require('./searchPlaces.js');
 var SearchForm = require('./searchForm.jsx');
 var SearchResults = require('./searchResults.jsx');
 
+var user = {
+  mealHistory: [
+    'Indian',
+    'Japanese',
+    'Barbeque',
+    'Pizza'
+  ]
+};
+
 var AppHeader = React.createClass({displayName: "AppHeader",
   render: function() {
     return React.createElement("h1", null, "C-C-C-Combo Breaker!");
@@ -36,76 +45,73 @@ var AppHeader = React.createClass({displayName: "AppHeader",
 var App = React.createClass({displayName: "App",
   getInitialState: function() {
     return {
-      searchAddress: "51 Melcher Street, Boston, MA",
-      searchKeyword: "Chinese",
-      mapCoords: null
+      location: null,
+      keyword: null
     };
   },
-  handleSearch: function(event) {
-    event.preventDefault();
-
-    var keyword = this.state.searchKeyword;
-
-    // get the search results
-
-    var self = this;
-
-    GMaps.geocode({
-      address: this.state.searchAddress,
-      callback: function(results, status) {
-
-        self.setState({
-          searchResults: keyword
-        });
-
-        if (status === 'OK') {
-          console.log('address was found');
-
-          // if it works,
-          // then you can create a map
-          // then search for places
-          var latlng = results[0].geometry.location;
-          var lat = latlng.lat();
-          var lng = latlng.lng();
-
-          self.setState({
-            mapCoords: {
-              lat: lat,
-              lng: lng
-            }
-          });
-        }
-
-      }
-    });
-  },
-  handleAddressChange: function(event) {
+  handleFormSubmit: function(params) {
     this.setState({
-      searchAddress: event.target.value
+      location: params.location,
+      keyword: params.keyword
     });
   },
-  handleCuisineChange: function(event) {
-    this.setState({
-      searchKeyword: event.target.value
-    });
-  },
+
+  // all this commented crap down here
+  // goes in Search Results
+
+  // handleSubmit: function(event) {
+  //   // this only ever changes the top-level
+  //   // state of the app
+  //   // anything involving the map itself
+  //   // or the results is done in the GoogleMap
+  //   // component
+  //   event.preventDefault();
+
+  //   var keyword = this.state.searchKeyword;
+
+  //   var self = this;
+
+  //   GMaps.geocode({
+  //     address: this.state.searchAddress,
+  //     callback: function(results, status) {
+
+  //       self.setState({
+  //         searchResults: keyword
+  //       });
+
+  //       if (status === 'OK') {
+  //         var latlng = results[0].geometry.location;
+  //         var lat = latlng.lat();
+  //         var lng = latlng.lng();
+
+  //         self.setState({
+  //           mapCoords: {
+  //             lat: lat,
+  //             lng: lng
+  //           }
+  //         });
+  //       } else {
+  //         self.setState({
+  //           errors: ['address not found']
+  //         });
+  //       }
+
+  //     }
+  //   });
+  // },
   render: function() {
     var data = {
-      address: this.state.searchAddress,
-      cuisine: this.state.searchKeyword
+      location: this.state.location,
+      keyword: this.state.keyword
     };
     return (
       React.createElement("div", null, 
         React.createElement(AppHeader, null), 
         React.createElement(SearchForm, {
-          data: data, 
-          handleSubmit: this.handleSearch, 
-          onAddressChange: this.handleAddressChange, 
-          onCuisineChange: this.handleCuisineChange}
+          handleFormSubmit: this.handleFormSubmit}
         ), 
         React.createElement(SearchResults, {
-          results: this.state.searchResults, 
-          mapCoords: this.state.mapCoords}
+          data: data}
         )
       )
     );
@@ -117,16 +123,6 @@ module.exports = App;
 var React = require('react');
 
 var GoogleMap = React.createClass({displayName: "GoogleMap",
-  getDefaultProps: function() {
-    return {
-      zoom: 17,
-      lat: 42.3493307,
-      lng: -71.0500077
-    }
-  },
-  getCenter: function() {
-    return new google.maps.LatLng(this.props.lat, this.props.lng);
-  },
   componentDidMount: function() {
     var map = this.buildMap();
     this.setState({
@@ -135,8 +131,10 @@ var GoogleMap = React.createClass({displayName: "GoogleMap",
   },
   buildMap: function() {
     var mapOptions = {
-      center: this.getCenter(),
-      zoom: this.props.zoom,
+      // this.props.geocode is a LatLng object,
+      // so no need to convert it
+      center: this.props.geocode,
+      zoom: 17,
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
     var rootNode = this.getDOMNode();
@@ -145,10 +143,17 @@ var GoogleMap = React.createClass({displayName: "GoogleMap",
   },
   componentDidUpdate: function() {
     var map = this.state.map;
-    map.panTo(this.getCenter());
+    map.panTo(this.props.geocode);
   },
   render: function() {
-    return React.createElement("div", {className: "map"});
+    return (
+      React.createElement("div", {className: "map"}, 
+        "map goes here", 
+        React.createElement("div", null, 
+          "results go here"
+        )
+      )
+      );
   },
 });
 
@@ -196,15 +201,8 @@ InputFields.CuisineField = React.createClass({displayName: "CuisineField",
 });
 
 module.exports = InputFields;
-},{"react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchForm.jsx":[function(require,module,exports){
-/** @jsx React.DOM */
-
+},{"react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchButton.jsx":[function(require,module,exports){
 var React = require('react');
-
-var InputFields = require('./inputFields.jsx');
-
-var AddressField = InputFields.AddressField;
-var CuisineField = InputFields.CuisineField;
 
 var SearchButton = React.createClass({displayName: "SearchButton",
   render: function () {
@@ -214,18 +212,54 @@ var SearchButton = React.createClass({displayName: "SearchButton",
   }
 });
 
+module.exports = SearchButton;
+},{"react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchForm.jsx":[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+
+var InputFields = require('./inputFields.jsx');
+var AddressField = InputFields.AddressField;
+var CuisineField = InputFields.CuisineField;
+
+var SearchButton = require('./searchButton.jsx');
+
 var SearchForm = React.createClass({displayName: "SearchForm",
+  getInitialState: function() {
+    return {
+      address: '',
+      cuisine: ''
+    };
+  },
+  handleSubmit: function(event) {
+    event.preventDefault();
+
+    this.props.handleFormSubmit({
+      location: this.state.address,
+      keyword: this.state.cuisine
+    });
+  },
+  handleAddressChange: function(event) {
+    this.setState({
+      address: event.target.value
+    });
+  },
+  handleCuisineChange: function(event) {
+    this.setState({
+      cuisine: event.target.value
+    });
+  },
   render: function() {
     return (
       React.createElement("form", {id: "search-form", 
-        onSubmit: this.props.handleSubmit}, 
+        onSubmit: this.handleSubmit}, 
         React.createElement(AddressField, {
-          address: this.props.data.address, 
-          handleChange: this.props.onAddressChange}
+          address: this.state.address, 
+          handleChange: this.handleAddressChange}
         ), 
         React.createElement(CuisineField, {
-          cuisine: this.props.data.cuisine, 
-          handleChange: this.props.onCuisineChange}
+          cuisine: this.state.cuisine, 
+          handleChange: this.handleCuisineChange}
         ), 
         React.createElement(SearchButton, null)
       )
@@ -234,7 +268,7 @@ var SearchForm = React.createClass({displayName: "SearchForm",
 });
 
 module.exports = SearchForm;
-},{"./inputFields.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js":[function(require,module,exports){
+},{"./inputFields.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/inputFields.jsx","./searchButton.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchButton.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/searchPlaces.js":[function(require,module,exports){
 var GMaps = require('gmaps');
 
 var SearchPlaces = {};
@@ -364,22 +398,106 @@ module.exports = SearchPlaces;
 /** @jsx React.DOM */
 
 var React = require('react');
+var GMaps = require('gmaps');
 
 var GoogleMap = require('./googleMap.jsx');
 
-var SearchResults = React.createClass({displayName: "SearchResults",
+// about the map:
+// the map is a black box
+// that takes latitude and longitude
+// and creates a map out of it
+// once this map is created in <GoogleMap />,
+// we need to be able to access it
+// in the PlaceResults component.
+// ...or should PlaceResults
+// be a sub component of GoogleMap?
+// hmmmmmm....that's not a bad idea.
+
+var Error = React.createClass({displayName: "Error",
   render: function() {
     return (
+      React.createElement("li", null, 
+        this.props.error
+      )
+    );
+  }
+});
+
+var SearchResults = React.createClass({displayName: "SearchResults",
+  getInitialState: function() {
+    return {
+      geocode: null,
+      errors: []
+    };
+  },
+  getLocationGeocode: function() {
+
+    var setGeocode = this.setGeocode;
+    var addErrors = this.addErrors;
+
+    var errors = [];
+
+    GMaps.geocode({
+      address: this.props.data.location,
+      callback: function(results, status) {
+        if (status === 'OK') {
+          var geocode = results[0].geometry.location;
+          setGeocode(geocode);
+        } else {
+          var error = "location not found";
+          errors.push(error);
+          setGeocode(null);
+        }
+        addErrors(errors);
+      }
+    });
+
+  },
+  setGeocode: function(geocode) {
+    this.setState({
+      geocode: geocode
+    });
+  },
+  addErrors: function(errors) {
+    this.setState({
+      // concatenate this.state.errors with the input array
+      // effectively "adding" it to the err array
+      errors: this.state.errors.concat([errors])
+    });
+  },
+  // if the component gets new props,
+  // i.e. the user input changes,
+  // call getLocationGeocode
+  // before rendering.
+  componentWillReceiveProps: function() {
+    this.getLocationGeocode();
+  },
+  render: function() {
+    var location = this.props.data.location;
+    var keyword = this.props.data.keyword;
+
+    var geocode = this.state.geocode;
+
+    var errors = this.state.errors.map(function (error) {
+      return React.createElement(Error, {key: error.id, error: error})
+    });
+
+    return (
       React.createElement("div", null, 
-        React.createElement("div", null, "you searched for ", this.props.results), 
-        this.props.mapCoords ? React.createElement(GoogleMap, {mapCenterLat: this.props.mapCoords.lat, mapCenterLng: this.props.mapCoords.lng}) : null
+        React.createElement("ul", null, 
+          errors
+        ), 
+        React.createElement("div", null, 
+          "You searched for: ", this.props.data.keyword
+        ), 
+        geocode ? React.createElement(GoogleMap, {geocode: geocode}) : null
       )
     );
   }
 });
 
 module.exports = SearchResults;
-},{"./googleMap.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/googleMap.jsx","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
+},{"./googleMap.jsx":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/app/src/googleMap.jsx","gmaps":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/gmaps/gmaps.js","react":"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/react/react.js"}],"/Users/rebecca/Desktop/combo-breaker/combo-breaker-app/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
